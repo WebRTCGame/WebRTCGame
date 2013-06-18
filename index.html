@@ -7,11 +7,12 @@
     <meta name="description" content="Webrtcgame : " />
 
     <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
-
+<script src="jquery-2.0.1.min.js"></script>
     <title>Webrtcgame</title>
   </head>
 
   <body>
+
 
     <!-- HEADER -->
     <div id="header_wrap" class="outer">
@@ -32,36 +33,11 @@
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
         <h3>
-<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
+<div class="headerBar">
+<button class="buttonHost">Host</button><button class="buttonJoin">Join</button>
+</div>
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
-</code></pre>
-
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
-
-<h3>
-<a name="designer-templates" class="anchor" href="#designer-templates"><span class="octicon octicon-link"></span></a>Designer Templates</h3>
-
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
-
-<h3>
-<a name="rather-drive-stick" class="anchor" href="#rather-drive-stick"><span class="octicon octicon-link"></span></a>Rather Drive Stick?</h3>
-
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
-
-<h3>
-<a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
-
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
-
-<h3>
-<a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
-
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
       </section>
     </div>
 
@@ -74,6 +50,202 @@ $ git checkout gh-pages
     </div>
 
     
+<div>
+	
+    <script src="https://rawgithub.com/WebRTCGame/WebRTCGame/master/files/peer.min.js"></script>
+    <script src="https://rawgithub.com/WebRTCGame/WebRTCGame/master/files/mux.js"></script>
+    <script src="https://rawgithub.com/WebRTCGame/WebRTCGame/master/files/app.js"></script>
+    <script src="https://rawgithub.com/WebRTCGame/WebRTCGame/master/files/key.js"></script>
+	
+<script>
+    //var key = 'lz6yk6yy4tg74x6r';
+var key = 'kmjpk4hdea5rk9';
 
+    var canvas;
+    var ctx;
+    var ballSpeed = 3
+    var paddle0Pos = 480/2;
+    var paddle1Pos = 480/2;
+    var lastPaddle0Pos = 480/2;
+    var lastPaddle1Pos = 480/2;
+    var ballPos = {x:640/2,y: 480/2};
+    var lastBallPos = {x:640/2,y: 480/2};
+    var paddleWidth = 100;
+    var ballWidth = 10;
+    var ballVelocity = {x:ballSpeed,y:0};
+
+    var player0Score = 0;
+    var player1Score = 0;
+    var score = player0Score + "   :   " + player1Score;
+
+    if(Math.floor( Math.random() * 2 ) == 1){
+        ballVelocity = {x:-ballSpeed,y:0};
+    }
+    ballVelocity.y = Math.random()*ballSpeed-ballSpeed/2;
+
+    var renderPong = function(){
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0,0,640,480);
+        ctx.fillStyle = 'red';
+        ctx.fillRect(20,paddle0Pos-paddleWidth/2,10,paddleWidth);
+
+        ctx.fillStyle = 'red';
+        ctx.fillRect(640-30,paddle1Pos-paddleWidth/2,10,paddleWidth);
+
+        ctx.fillStyle = 'green';
+        ctx.fillRect(ballPos.x-ballWidth/2,ballPos.y-ballWidth/2,ballWidth,ballWidth);
+
+        ctx.fillStyle = "blue";
+        ctx.fillText(score,640/2-50,20);
+    };
+
+    var hitPaddle = function(){
+        if( ballPos.x >= 20 && ballPos.y >= paddle0Pos-paddleWidth/2 &&  ballPos.x < 20+10 && ballPos.y < paddle0Pos-paddleWidth/2+paddleWidth){
+            return true;
+        }
+
+        if( ballPos.x >= 640-30 && ballPos.y >= paddle1Pos-paddleWidth/2 &&  ballPos.x < 640-30+10 && ballPos.y < paddle1Pos-paddleWidth/2+paddleWidth){
+            return true;
+        }
+
+        return false;
+    }
+
+    var startServer = function(){
+        var run = function(){
+            renderPong();
+            if(Key.isDown(Key.DOWN_ARROW)){
+                paddle0Pos += 2;
+            }
+            if(Key.isDown(Key.UP_ARROW)){
+                paddle0Pos -= 2;
+            }
+            paddle0Pos = Math.max(paddle0Pos,0);
+            paddle0Pos = Math.min(paddle0Pos,640);
+
+
+            tempBallPos = {x:ballPos.x,y:ballPos.y};
+
+            ballPos.x += ballVelocity.x;
+            ballPos.y += ballVelocity.y;
+
+            if(ballPos.x > 640 || ballPos.x <0){
+                if(ballPos.x < 0){
+                    player1Score++;
+                }
+                if(ballPos.x > 640){
+                    player0Score++;
+                }
+                score = player0Score + "   :   " + player1Score;
+                app.send({type: "score", score: score})
+
+                ballPos =  {x:640/2,y: 480/2};
+                ballVelocity = {x:ballSpeed,y:0};
+                if(Math.floor( Math.random() * 2 ) == 1){
+                    ballVelocity = {x:-ballSpeed,y:0};
+                }
+                ballVelocity.y = Math.random()*ballSpeed-ballSpeed/2;
+            }
+            if(hitPaddle()){
+                ballVelocity.x = -ballVelocity.x;
+                ballVelocity.y = Math.random()*2*ballSpeed-ballSpeed;
+                ballPos = tempBallPos;
+            }
+            if(ballPos.y > 480 || ballPos.y <0){
+                ballVelocity.y = -ballVelocity.y;
+                ballPos = tempBallPos;
+            }
+
+            if(paddle0Pos != lastPaddle0Pos){
+                lastPaddle0Pos = paddle0Pos;
+                app.send({type:"paddle0Pos",pos:paddle0Pos});
+            }
+
+            if(lastBallPos.x != ballPos.x || lastBallPos.y != ballPos.y){
+                app.send({type:"ballPos",pos:ballPos});
+            }
+        };
+
+        var app = new App(key);
+        app.on("connected",function(){
+            console.log("connected with peer")
+            canvas = document.createElement('canvas');
+            canvas.width = 640;
+            canvas.height = 480;
+            ctx = canvas.getContext('2d');
+            $(document.body).append(canvas);
+            setInterval(run,1000/60);
+        });
+        app.on("disconnected",function(){
+            console.log("disconnected with peer")
+            $('.headerBar').fadeIn();
+        });
+        app.on("message",function(obj){
+            if(obj.type == "paddle1Pos"){
+                paddle1Pos = obj.pos;
+            }
+        });
+        app.on("error",function(err){
+            console.log(err);
+        });
+        app.host();
+        window.prompt("Give this code to the other person",app.guid);
+        $('.headerBar').fadeOut();
+    };
+
+    var startClient = function(){
+        var run = function(){
+            renderPong();
+            if(Key.isDown(Key.DOWN_ARROW)){
+                paddle1Pos += 2;
+            }
+            if(Key.isDown(Key.UP_ARROW)){
+                paddle1Pos -= 2;
+            }
+            paddle1Pos = Math.max(paddle1Pos,0);
+            paddle1Pos = Math.min(paddle1Pos,640);
+
+            if(paddle1Pos != lastPaddle1Pos){
+                lastPaddle1Pos = paddle1Pos;
+                app.send({type:"paddle1Pos",pos:paddle1Pos});
+            }
+        };
+
+        var app = new App(key);
+        app.on("connected",function(){
+            canvas = document.createElement('canvas');
+            canvas.width = 640;
+            canvas.height = 480;
+            ctx = canvas.getContext('2d');
+            $(document.body).append(canvas);
+            console.log("connected with peer")
+            setInterval(run,1000/60);
+        })
+        app.on("disconnected",function(){
+            console.log("disconnected with peer")
+            $('.headerBar').fadeIn();
+        })
+        app.on("message",function(obj){
+            if(obj.type == "paddle0Pos"){
+                paddle0Pos = obj.pos;
+            }
+            if(obj.type == "ballPos"){
+                ballPos = obj.pos;
+            }
+            if(obj.type == "score"){
+                score = obj.score;
+            }
+        })
+        app.on("error",function(err){
+            console.log(err);
+        })
+        app.join(window.prompt("Enter in game code"));
+        $('.headerBar').fadeOut();
+    };
+
+    $('.buttonHost').click(startServer);
+    $('.buttonJoin').click(startClient);
+</script>
+</div>
   </body>
 </html>
